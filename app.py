@@ -32,7 +32,7 @@ VERIFY_SSL = os.environ.get("VERIFY_SSL", "true").lower() not in (
     "0",
     "no",
 )
-REQUEST_TIMEOUT = float(os.environ.get("REQUEST_TIMEOUT", "10"))
+REQUEST_TIMEOUT = float(os.environ.get("REQUEST_TIMEOUT", "3"))
 WINNERS_TIMEOUT = float(os.environ.get("WINNERS_TIMEOUT", str(REQUEST_TIMEOUT)))
 RTP_UPDATE_INTERVAL = float(os.environ.get("RTP_UPDATE_INTERVAL", "3"))
 
