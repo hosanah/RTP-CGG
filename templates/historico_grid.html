@@ -27,6 +27,35 @@
         <button id="btn-filtrar" class="btn btn-success">Filtrar</button>
         <a href="/" class="btn btn-secondary">Voltar</a>
       </div>
+      <div class="col-md-2">
+        <input type="text" id="name" class="form-control" placeholder="Nome do jogo" />
+      </div>
+      <div class="col-md-2">
+        <input type="text" id="provider" class="form-control" placeholder="Provedor" />
+      </div>
+      <div class="col-md-2">
+        <input type="number" id="extra" class="form-control" placeholder="Unidades" />
+      </div>
+      <div class="col-md-2 text-end">
+        <button id="btn-filtrar" class="btn btn-success">Filtrar</button>
+        <a href="/" class="btn btn-secondary">Voltar</a>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-dark table-striped" id="records-table">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>ID</th>
+            <th>Jogo</th>
+            <th>RTP (%)</th>
+            <th>Unidades</th>
+            <th>Status</th>
+            <th>Provedor</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </div>
     <div class="table-responsive">
       <table class="table table-dark table-striped" id="records-table">
@@ -51,14 +80,12 @@
 
     async function carregar() {
       const params = new URLSearchParams();
-      const inicio = document.getElementById('start').value;
-      const fim = document.getElementById('end').value;
-      const gidValue = document.getElementById('game-id').value.trim();
-      const nome = document.getElementById('name').value;
       if (inicio) params.append('start', inicio);
       if (fim) params.append('end', fim);
       if (gidValue) params.append('game_id', gidValue);
       if (nome) params.append('name', nome);
+      if (provedor) params.append('provider', provedor);
+      if (unidades) params.append('extra', unidades);
       const resp = await fetch('/api/history/records?' + params.toString());
       if (!resp.ok) return;
       const dados = await resp.json();

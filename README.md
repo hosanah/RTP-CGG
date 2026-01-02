@@ -51,12 +51,16 @@ Esse mesmo Dockerfile funciona em plataformas como o **EasyPanel**, bastando inf
 
 ## Variáveis de ambiente
 
-O projeto não exige variáveis de ambiente obrigatórias, mas algumas opções podem ser configuradas manualmente:
+O projeto carrega variáveis definidas em um arquivo `.env` se presente. Nenhuma variável é obrigatória, mas várias opções podem ser configuradas manualmente:
 
 - `FLASK_APP` e `FLASK_ENV` podem ser usados ao executar via `flask run`.
 - `PORT` pode definir a porta do servidor caso utilize o comando `flask run`.
 - Defina `DEBUG_REQUESTS=true` para registrar detalhes das chamadas HTTP.
 - A variável `FLASK_DEBUG` controla o modo debug do Flask.
+- `DATABASE_URL` define a conexão PostgreSQL (também lida via `.env`).
+- `REQUEST_TIMEOUT` ajusta o tempo limite das requisições RTP (padrão `10`).
+- `WINNERS_TIMEOUT` define o timeout para `/api/last-winners`.
+- `RTP_UPDATE_INTERVAL` controla a pausa entre buscas automáticas (padrão `3`).
 
 Aplicação Flask que exibe os dados de RTP de jogos em tempo real.
 

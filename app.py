@@ -1,10 +1,12 @@
 import os
 import urllib3
+from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template, request
 from flask_socketio import SocketIO, emit
 from flask import send_file, abort
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+load_dotenv()
 import requests
 from google.protobuf import message_factory
 from google.protobuf.descriptor_pb2 import FileDescriptorProto
@@ -30,7 +32,9 @@ VERIFY_SSL = os.environ.get("VERIFY_SSL", "true").lower() not in (
     "0",
     "no",
 )
-REQUEST_TIMEOUT = 10
+REQUEST_TIMEOUT = float(os.environ.get("REQUEST_TIMEOUT", "3"))
+WINNERS_TIMEOUT = float(os.environ.get("WINNERS_TIMEOUT", str(REQUEST_TIMEOUT)))
+RTP_UPDATE_INTERVAL = float(os.environ.get("RTP_UPDATE_INTERVAL", "3"))
 
 url = "https://cgg.bet.br/casinogo/widgets/v2/live-rtp"
 search_url = "https://cgg.bet.br/casinogo/widgets/v2/live-rtp/search"
@@ -267,6 +271,12 @@ def historico_registros():
     return render_template("historico_grid.html")
 
 
+@app.route("/registro-extra")
+def registro_extra():
+    """Página que exibe jogos filtrados pela média de unidades."""
+    return render_template("registro_extra.html")
+
+
 @app.route("/api/games")
 def games():
     global latest_games
@@ -317,7 +327,20 @@ def api_history_records():
     end = request.args.get("end")
     gid = request.args.get("game_id")
     name = request.args.get("name")
-    return jsonify(db.history_records(start, end, gid, name))
+    provider = request.args.get("provider")
+    extra = request.args.get("extra")
+    return jsonify(db.history_records(start, end, gid, name, provider, extra))
+
+
+@app.route("/api/registro-extra")
+def api_registro_extra():
+    """Retorna jogos filtrados pela média de unidades."""
+    start = request.args.get("dataInicial")
+    end = request.args.get("dataFinal")
+    extra = request.args.get("extra", type=int)
+    if not start or not end or extra is None:
+        return jsonify([]), 400
+    return jsonify(db.games_by_extra(start, end, extra))
 
 
 @app.route("/api/search-rtp", methods=["POST"])
@@ -374,7 +397,7 @@ def background_fetch():
                 db.insert_games(latest_games)
                 socketio.emit("games_update", latest_games)
         finally:
-            socketio.sleep(3)
+            socketio.sleep(RTP_UPDATE_INTERVAL)
 
 
 @app.route("/api/last-winners")
@@ -394,7 +417,7 @@ def last_winners():
             winners_url,
             headers=winners_headers,
             verify=VERIFY_SSL,
-            timeout=REQUEST_TIMEOUT,
+            timeout=WINNERS_TIMEOUT,
         )
         response.raise_for_status()
 

@@ -1,6 +1,9 @@
 import os
+from dotenv import load_dotenv
 import psycopg2
 from psycopg2.extras import RealDictCursor
+
+load_dotenv()
 
 DB_DSN = os.environ.get(
     "DATABASE_URL",
@@ -198,6 +201,12 @@ def history_records(
     if name:
         where.append("lower(name) LIKE %s")
         params.append(f"%{name.lower()}%")
+    if provider:
+        where.append("lower(provider) LIKE %s")
+        params.append(f"%{provider.lower()}%")
+    if extra:
+        where.append("CAST(extra AS TEXT) LIKE %s")
+        params.append(f"%{extra}%")
     where_sql = f"WHERE {' AND '.join(where)}" if where else ""
     query = f"""
         SELECT game_id, name, provider, rtp, extra, rtp_status, timestamp
@@ -206,6 +215,29 @@ def history_records(
         ORDER BY timestamp DESC
         LIMIT 1000
     """
+    with get_connection() as conn, conn.cursor(cursor_factory=RealDictCursor) as cur:
+        cur.execute(query, params)
+        return cur.fetchall()
+
+
+def games_by_extra(
+    start: str,
+    end: str,
+    extra: int,
+    casa: str = "cbet",
+) -> list[dict]:
+    """Retorna jogos filtrados pela média de unidades no período."""
+    op = ">" if extra >= 0 else "<"
+    order = "DESC" if extra >= 0 else "ASC"
+    query = f"""
+        SELECT game_id, name, provider, AVG(extra) AS media
+        FROM rtp_history
+        WHERE casa = %s AND timestamp >= %s AND timestamp <= %s
+        GROUP BY game_id, name, provider
+        HAVING AVG(extra) {op} %s
+        ORDER BY media {order}
+    """
+    params = [casa, start, end, extra]
     with get_connection() as conn, conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute(query, params)
         return cur.fetchall()
